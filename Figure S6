@@ -1,0 +1,151 @@
+"""Figure6"""
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+import matplotlib.dates as mdates
+from matplotlib.ticker import MultipleLocator
+from matplotlib.ticker import AutoMinorLocator
+
+plt.rcParams['font.family'] = 'Times New Roman'
+csv_file = "E:\\论文最终提交的图片数据\\图\\数据准备\\事件版\\整理版6h平均值.csv"
+df = pd.read_csv(csv_file)
+
+df.iloc[:, 0] = pd.to_datetime(df.iloc[:, 0], format='%Y/%m/%d %H:%M')
+x = df.iloc[:, 0]  
+true_values = df.iloc[:, 1]
+predicted_values_model1 = df.iloc[:, 2]
+predicted_values_model2 = df.iloc[:, 5]
+error1 = df.iloc[:, 8]
+error2 = df.iloc[:, 9]
+symh = df.iloc[:, 7]
+
+date_ranges = [("2015/10/5", "2015/10/18"), ("2015/11/5", "2015/11/17")]
+fig, ax = plt.subplots(4, 2, figsize=(16,12), gridspec_kw={'height_ratios': [1, 1, 1, 1]})
+fig.subplots_adjust(hspace=0.5)
+
+gs = ax[1, 0].get_gridspec()
+for a in ax[1, :]:
+    a.remove()
+ax_big = fig.add_subplot(gs[1, :])
+
+gs1 = ax[0, 0].get_gridspec()
+for a in ax[0, :]:
+    a.remove()
+    
+ax_big1 = fig.add_subplot(gs1[0, :])
+ax_big1.plot(x.values, symh.values, color='black', linestyle='-', label='Symh', linewidth=1)
+ax_big1.tick_params(axis='x', which='major', bottom=True, top=False, direction='in', length=6, width=1.5, labelsize=1)
+ax_big1.tick_params(axis='y', which='major', left=True, right=True, direction='in', length=6, width=1.5, labelsize=17)
+
+ax_big1.set_ylabel('SYM-H (nT)\n', fontsize=17)
+
+ax_big1.legend(loc='upper right', fontsize=16)
+ax_big1.set_facecolor('white')
+ax_big1.grid(False)
+
+ax_big1.text(0.02, 0.89, '(a)', transform=ax_big1.transAxes, fontsize=21, fontweight='bold')
+
+ax_big1.xaxis.set_major_locator(MultipleLocator(15))
+ax_big1.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d'))
+
+ax_big1.xaxis.set_minor_locator(MultipleLocator(3))
+ax_big1.yaxis.set_minor_locator(AutoMinorLocator())
+
+ax_big1.tick_params(axis='x', which='minor', direction='in', length=3, width=1,bottom=True, top=True) 
+ax_big1.tick_params(axis='y', which='minor', direction='in', length=3, width=1,left=True, right=True)
+
+ax_big1.set_xticklabels([])
+ax_big1.set_xlim(x.min(), x.max())  
+
+ax_big.plot(x.values, true_values.values, color='black', linestyle='-', label='Observations', linewidth=1)
+ax_big.plot(x.values, predicted_values_model1.values, color='red', linestyle='--', label='Base-DNN', linewidth=1)
+ax_big.plot(x.values, predicted_values_model2.values, color='blue', linestyle='--', label='DNN', linewidth=1)
+
+ax_big.axhline(y=3.5, color='gray', linestyle='--', linewidth=1.5, label='y=3.5')
+
+for start, end in date_ranges:
+    ax_big.axvspan(pd.to_datetime(start), pd.to_datetime(end), color='yellow', alpha=0.1)
+
+ax_big.tick_params(axis='x', which='major', bottom=True, top=False, direction='in', length=6, width=1.5, labelsize=18)
+ax_big.tick_params(axis='y', which='major', left=True, right=True, direction='in', length=6, width=1.5, labelsize=17)
+
+ax_big.xaxis.set_major_locator(MultipleLocator(15))
+ax_big.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d'))
+
+ax_big.xaxis.set_minor_locator(MultipleLocator(3))
+ax_big.yaxis.set_minor_locator(AutoMinorLocator())
+
+ax_big.tick_params(axis='x', which='minor', direction='in', length=3, width=1,bottom=True, top=True)  
+ax_big.tick_params(axis='y', which='minor', direction='in', length=3, width=1,left=True, right=True) 
+
+ax_big.legend(loc='upper right', fontsize = 17,ncol=2)
+ax_big.set_xlim(x.min(), x.max())
+ax_big.set_facecolor('white')
+ax_big.grid(False)
+
+ax_big.set_ylabel('>2 MeV Flux\nlog$_{10}$(cm$^{2}$sr s)$^{-1}$', fontsize=18)
+
+ax_big.text(0.02, 0.89, '(b)', transform=ax_big.transAxes, fontsize=21, fontweight='bold')
+
+for i, (start, end) in enumerate(date_ranges):
+    mask = (x >= pd.to_datetime(start)) & (x <= pd.to_datetime(end)) & (true_values > 3.0)
+    dates = x[mask]
+    values_true = true_values[mask]
+    values_model1 = predicted_values_model1[mask]
+    values_model2 = predicted_values_model2[mask]
+    error11 = error1[mask]
+    error22 = error2[mask]
+    
+    tick_dates = pd.date_range(start=pd.to_datetime(start), end=pd.to_datetime(end), freq='3D')
+
+    ax[2, i].plot(dates.values, values_true.values, color='black', linestyle='-', label='Observations', linewidth=1.5)
+    ax[2, i].plot(dates.values, values_model1.values, color='red', linestyle='--', label='Base-DNN', linewidth=1.5)
+    ax[2, i].plot(dates.values, values_model2.values, color='blue', linestyle='--', label='DNN', linewidth=1.5)
+    ax[2, i].set_xlim([pd.to_datetime(start), pd.to_datetime(end)])
+    ax[2, i].xaxis.set_major_locator(mdates.DayLocator(interval=3))
+    ax[2, i].set_xticks(tick_dates)
+    ax[2, i].xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
+    ax[2, i].tick_params(axis='x', which='major', labelsize=18)
+    ax[2, i].set_xticklabels([])
+    ax[2, 1].set_yticklabels([])
+    ax[2, 0].set_ylabel('>2 MeV Flux\nlog$_{10}$(cm$^{2}$sr s)$^{-1}$', fontsize=18)
+    ax[2,i].xaxis.set_minor_locator(AutoMinorLocator())
+    ax[2,i].yaxis.set_minor_locator(AutoMinorLocator())
+
+    ax[2,i].tick_params(axis='x', which='minor', direction='in', length=3, width=1,bottom=True, top=True)  # x 轴次要刻度线的长度和宽度
+    ax[2,i].tick_params(axis='y', which='minor', direction='in', length=3, width=1,left=True, right=True)  # y 轴次要刻度线的长度和宽度
+
+    ax[2, i].tick_params(axis='x', which='major', bottom=True, top=True, direction='in', length=6, width=1, labelsize=18)
+    ax[2, i].tick_params(axis='y', which='major', bottom=True, top=True, direction='in', length=6, width=1, labelsize=18)
+    ax[2,1].legend(loc='upper right', fontsize = 17,ncol=1)
+    
+    bar_width = 0.25 
+    dates_num = mdates.date2num(dates)  
+    ax[3, i].bar(dates_num, error11.values, width=bar_width, color='red', label='Base-DNN', alpha=0.5,edgecolor='red')
+    ax[3, i].bar(dates_num, error22.values, width=bar_width, color='blue', label='DNN', alpha=0.5,edgecolor='blue')
+    ax[3, i].set_xlim([pd.to_datetime(start), pd.to_datetime(end)])
+    ax[3, i].xaxis.set_major_locator(mdates.DayLocator(interval=3))
+    ax[3, i].set_xticks(tick_dates)
+    ax[3, i].xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
+    ax[3, i].tick_params(axis='x', which='major', labelsize=18)
+    ax[3, i].set_ylim(-0.1, 0.1)
+    ax[3, i].axhline(y=0, color='black', linestyle='-', linewidth=1)
+    ax[3, 0].set_ylabel('Relative Error', fontsize=19)
+    ax[3, 0].set_xlabel('Date', fontsize=20)
+    ax[3, 1].set_xlabel('Date', fontsize=20)
+    ax[3, 1].set_yticklabels([])
+    ax[3,i].xaxis.set_minor_locator(AutoMinorLocator())
+    ax[3,i].yaxis.set_minor_locator(AutoMinorLocator())
+    ax[3,1].legend(loc='upper right', fontsize = 17,ncol=2)
+    ax[3,i].tick_params(axis='x', which='minor', direction='in', length=3, width=1,bottom=True, top=True)  
+    ax[3,i].tick_params(axis='y', which='minor', direction='in', length=3, width=1,left=True, right=True) 
+    ax[3, i].tick_params(axis='x', which='major', bottom=True, top=True, direction='in', length=3, width=1, labelsize=18)
+    ax[3, i].tick_params(axis='y', which='major', bottom=True, top=True, direction='in', length=3, width=1, labelsize=17)
+
+ax[2,0].text(0.04, 0.89, '(c)', transform=ax[2,0].transAxes, fontsize=21, fontweight='bold')
+ax[2,1].text(0.04, 0.89, '(d)', transform=ax[2,1].transAxes, fontsize=21, fontweight='bold')
+ax[3,0].text(0.04, 0.89, '(e)', transform=ax[3,0].transAxes, fontsize=21, fontweight='bold')
+ax[3,1].text(0.04, 0.89, '(f)', transform=ax[3,1].transAxes, fontsize=21, fontweight='bold')
+
+plt.tight_layout()
+plt.show()
