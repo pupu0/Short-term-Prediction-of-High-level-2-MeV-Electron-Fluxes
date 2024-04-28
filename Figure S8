@@ -1,0 +1,106 @@
+"""Figure8"""
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import gaussian_kde
+from matplotlib import rcParams
+from collections import defaultdict
+import csv
+from matplotlib.ticker import AutoMinorLocator, MultipleLocator
+
+sns.set(style="white")
+rcParams.update({'font.size': 14, 'font.family': 'Times New Roman'})
+
+mlt_hour_records = defaultdict(list)
+csv_file_path ="F:\\论文最终提交的图片数据\\图\\数据准备\\2015大于3.5数据整理版.csv"
+
+with open(csv_file_path, mode='r') as file:
+    reader = csv.DictReader(file)
+    for row in reader:
+        mlt_value = float(row['mlt'])
+        if mlt_value >= 3 and mlt_value <= 8:
+            mlt_range = '3-8'
+        elif mlt_value >= 9 and mlt_value <= 14:
+            mlt_range = '9-14'
+        elif mlt_value >= 15 and mlt_value <= 20:
+            mlt_range = '15-20'
+        else:
+            mlt_range = '21-2'        
+
+        mlt_hour_records[mlt_range].append(row)
+
+fig, axs = plt.subplots(2, 2, figsize=(10.5, 10))
+mlt_ranges_ordered = ['3-8', '9-14', '15-20', '21-2']
+
+for idx, mlt_range in enumerate(mlt_ranges_ordered):
+    records = mlt_hour_records[mlt_range]
+    column1_values = np.array([float(record['true_value']) - float(record['model1_mse']) for record in records])
+    column2_values = np.array([float(record['true_value']) - float(record['model2_loss']) for record in records])
+    kde1 = gaussian_kde(column1_values)
+    kde2 = gaussian_kde(column2_values)
+    x_grid = np.linspace(min(column1_values.min(), column2_values.min()), max(column1_values.max(), column2_values.max()), 100)
+    kde1_eval = kde1(x_grid)
+    kde2_eval = kde2(x_grid)
+    axs[idx // 2, idx % 2].plot(x_grid, kde1_eval, label='Base-DNN', color='darkred')
+    axs[idx // 2, idx % 2].fill_between(x_grid, kde1_eval, color='salmon', alpha=0.5)
+    axs[idx // 2, idx % 2].plot(x_grid, kde2_eval, label='DNN', color='navy')
+    axs[idx // 2, idx % 2].fill_between(x_grid, kde2_eval, color='lightblue', alpha=0.5)
+
+    avg_error1 = np.mean(column1_values)
+    avg_error2 = np.mean(column2_values)
+
+    max_density_val1 = x_grid[np.argmax(kde1_eval)]
+    max_density_val2 = x_grid[np.argmax(kde2_eval)]
+    max_density_height1 = np.max(kde1_eval)
+    max_density_height2 = np.max(kde2_eval)
+
+    axs[idx // 2, idx % 2].axvline(avg_error1, color='red', linestyle='--', label=f'Avg1: {avg_error1:.2f}')
+    axs[idx // 2, idx % 2].axvline(avg_error2, color='blue', linestyle='--', label=f'Avg2: {avg_error2:.2f}')    
+    axs[idx // 2, idx % 2].legend(loc='upper right',fontsize = 14)
+    axs[idx // 2, idx % 2].spines['top'].set_visible(True)
+    axs[idx // 2, idx % 2].spines['right'].set_visible(True)
+    axs[idx // 2, idx % 2].spines['bottom'].set_visible(True)
+    axs[idx // 2, idx % 2].spines['left'].set_visible(True)
+    axs[idx // 2, idx % 2].tick_params(axis='x', which='both',direction='in', length=5, width=1.5,bottom=True, top=True,                                        labelbottom=True, labelsize=17)
+    axs[idx // 2, idx % 2].tick_params(axis='y', which='both',direction='in', length=5, width=1.5,left=True, right=True, 
+                                       labelleft=True, labelsize=17)
+    axs[0, idx % 2].set_ylim(0.0,3.9)
+    axs[1, idx % 2].set_ylim(0.0,3.9)
+    axs[0, idx % 2].set_xlim(-1.0,1.0)
+    axs[1, idx % 2].set_xlim(-1.0,1.0)
+    
+    axs[0,1].set_yticklabels([])
+    axs[1,1].set_yticklabels([])
+    axs[0,0].set_xticklabels([])
+    axs[0,1].set_xticklabels([])
+
+    axs[idx // 2, idx % 2].xaxis.set_minor_locator(AutoMinorLocator())
+    axs[idx // 2, idx % 2].yaxis.set_minor_locator(AutoMinorLocator())
+
+    axs[idx // 2, idx % 2].tick_params(axis='x', which='minor', direction='in', length=3, width=1)  
+    axs[idx // 2, idx % 2].tick_params(axis='y', which='minor', direction='in', length=3, width=1) 
+    
+    axs[0,0].text(0.02, 0.92, '(a) Dawnside', transform=axs[0,0].transAxes, fontsize=17)
+    axs[0,1].text(0.02, 0.92, '(b) Dayside', transform=axs[0,1].transAxes, fontsize=17)
+    axs[1,0].text(0.02, 0.92, '(c) Duskside', transform=axs[1,0].transAxes, fontsize=17)
+    axs[1,1].text(0.02, 0.92, '(d) Nightside', transform=axs[1,1].transAxes, fontsize=17)
+
+fig.text(0.5, -0.01, ' $\mathit{log}_{10}$ (Flux$_{obs}$ - Flux$_{model}$) $\mathit{cm}^{-2}{sr}^{-1}{s}^{-1}$', ha='center', fontsize=18)
+fig.text(-0.02, 0.5, 'Probability Density', va='center', rotation='vertical', fontsize=20)
+
+text_boxes = [
+    "Base-DNN-PE: 0.817\nDNN-PE: 0.805",
+    "Base-DNN-PE: 0.911\nDNN-PE: 0.917",
+    "Base-DNN-PE: 0.793\nDNN-PE: 0.873",
+    "Base-DNN-PE: 0.734\nDNN-PE: 0.741"
+]
+
+textbox_props = dict(boxstyle='square', facecolor='white', edgecolor='none', alpha=1)
+axs[0,0].text(0.03, 0.78, text_boxes[0], transform=axs[0,0].transAxes, fontsize=16, verticalalignment='bottom', bbox=textbox_props)
+axs[0,1].text(0.03, 0.78, text_boxes[1], transform=axs[0,1].transAxes, fontsize=16, verticalalignment='bottom', bbox=textbox_props)
+axs[1,0].text(0.03, 0.78, text_boxes[2], transform=axs[1,0].transAxes, fontsize=16, verticalalignment='bottom', bbox=textbox_props)
+axs[1,1].text(0.03, 0.78, text_boxes[3], transform=axs[1,1].transAxes, fontsize=16, verticalalignment='bottom', bbox=textbox_props)
+
+plt.suptitle('Predicted Error Distribution of MLT Four Sectors', fontsize=20)
+plt.tight_layout()
+plt.show()
