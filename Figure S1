@@ -58,7 +58,6 @@ if '2mev' in data.columns:
         if value >= 3.5:
             patch.set_facecolor('red')  
             patch.set_edgecolor('red')  
-    plt.savefig('E:\\论文最终提交的图片数据\\图\\loss调权重图.png', dpi=300, bbox_inches='tight')
     plt.show()
 else:
     print("Column '2mev' does not exist in the DataFrame. Please check the column name.")
