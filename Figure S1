@@ -1,0 +1,64 @@
+"""Loss Weight Adjustment Diagram"""
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.ticker as ticker
+
+plt.rcParams['font.family'] = 'Times New Roman'
+
+data = pd.read_csv("E:\\修改测试集的尝试\\train_set_10-12.csv")
+fig, ax1 = plt.subplots(figsize=(10, 5))
+
+if '2mev' in data.columns:
+    data_filtered = data[data['2mev'] >= 1]
+    counts, bins, patches = ax1.hist(data_filtered['2mev'], bins=50, alpha=0.5, density=True, edgecolor='blue', label='Distribution')  # Add edges to the bars
+    ax1.set_ylabel('Frequency', fontsize=15)
+    ax1.tick_params(axis='y', labelsize=14, which='both', direction='in')
+    
+    def sigmoid(x, alpha, beta, lambd):
+        return alpha / (1 + np.exp(-beta * (x - lambd)))
+
+    x_values = np.linspace(1, data_filtered['2mev'].max(), 200)  
+    alpha_optimal = 69.8  
+    beta_optimal = 15 
+    lambd_optimal = 3.50  
+    y_values = sigmoid(x_values, alpha_optimal, beta_optimal, lambd_optimal)
+
+    ax2 = ax1.twinx()
+    y_values_normalized = (y_values / max(y_values)) * (max(counts)/0.75)
+    ax2.plot(x_values, y_values_normalized, label='Modified Sigmoid Function', color='red')
+    
+    ax2.set_ylabel('Modified Sigmoid', fontsize=15)
+    ax2.tick_params(axis='y', labelsize=14, which='both', direction='in')
+    ax2.yaxis.set_major_locator(ticker.AutoLocator())
+    ax2.yaxis.set_minor_locator(ticker.AutoMinorLocator())
+    
+    ax1.yaxis.set_major_locator(ticker.AutoLocator())
+    ax1.yaxis.set_minor_locator(ticker.AutoMinorLocator())
+    
+    ax2.fill_between(x_values, y_values_normalized, color='gray', alpha=0.3, hatch='/')
+    custom_ticks = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]  
+
+    ax2.set_yticks(custom_ticks)
+    ax2.set_ylim(0.0)
+    ax2.set_yticklabels([f'{tick*100}' for tick in custom_ticks])  
+    ax1_legend = ax1.legend(prop={'size': 12}, loc='upper right', bbox_to_anchor=(0.865, 1))
+    ax2_legend = ax2.legend(prop={'size': 12}, loc='upper right', bbox_to_anchor=(1.0, 0.915))
+
+    plt.xlabel('Flux Interval', fontsize=15)  
+    plt.xticks(np.arange(data_filtered['2mev'].min(), data_filtered['2mev'].max()+1, 0.5), fontsize=20) 
+    plt.tick_params(axis='x', labelsize=17)  
+    plt.xlim(data_filtered['2mev'].min(), data_filtered['2mev'].max())  
+    plt.tick_params(axis='x', labelsize=14)  
+    
+    ax1.set_xlabel('Flux Interval', fontsize=15)
+    ax1.tick_params(axis='x', labelsize=14, which='both')
+    plt.title('Loss Weight Adjustment', fontsize=16)
+    for patch, value in zip(patches, bins):
+        if value >= 3.5:
+            patch.set_facecolor('red')  
+            patch.set_edgecolor('red')  
+    plt.savefig('E:\\论文最终提交的图片数据\\图\\loss调权重图.png', dpi=300, bbox_inches='tight')
+    plt.show()
+else:
+    print("Column '2mev' does not exist in the DataFrame. Please check the column name.")
