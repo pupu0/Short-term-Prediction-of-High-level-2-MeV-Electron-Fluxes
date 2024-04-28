@@ -1,0 +1,55 @@
+"""Figure5"""
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.ticker import AutoMinorLocator, MultipleLocator
+
+plt.rcParams['font.family'] = 'Times New Roman'
+
+fig, ax = plt.subplots(figsize=(5, 5))
+
+x = np.arange(3.5, 5.6, 0.1)
+y = np.arange(3.5, 5.6, 0.1)
+
+ax.set_ylabel('>2MeV Flux$_{model}$\nlog$_{10}$(cm$^{2}$srs)$^{-1}$', fontsize=15)
+ax.set_xlabel('>2MeV Flux$_{obs}$\nlog$_{10}$(cm$^{2}$srs)$^{-1}$', fontsize=15)
+ax.set_xlim(3.5, 5.5)
+ax.set_ylim(3.5, 5.5)
+
+for spine in ax.spines.values():
+    spine.set_edgecolor('black')
+
+ax.tick_params(axis='both', which='both', direction='in', length=6, width=1.25, bottom=True, top=True, left=True, right=True, labelsize=15)
+ax.xaxis.set_major_locator(MultipleLocator(0.5))
+ax.yaxis.set_major_locator(MultipleLocator(0.5))
+ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+ax.yaxis.set_minor_locator(AutoMinorLocator(5))
+
+ax.tick_params(axis='both', which='minor', direction='in', length=3, width=0.8)
+ax.grid(False)
+ax.plot(x, x, color='black', linestyle='-', label='Unbiased Fit', linewidth=2)
+
+line_styles = ['-.', '-.', '-.','-.'] 
+line_colors = ['red', 'cyan', 'green','magenta']  
+
+line_labels = ['Base-DNN(k=0.963,b=0.039)', 'Base-DNN+Enhanced(k=0.969,b=0.083)', 
+               'DNN+MSE(k=0.973,b=0.072)','DNN(k=0.981,b=0.058)'] 
+
+slopes = [0.963, 0.969, 0.973,0.981]
+intercepts = [0.039, 0.083, 0.072,0.058]
+for idx, (slope, intercept, line_label) in enumerate(zip(slopes, intercepts, line_labels)):
+    line_values = slope * x + intercept
+    ax.plot(x, line_values, linestyle=line_styles[idx], color=line_colors[idx], label=line_label, linewidth=1.65)  
+
+major_ticks = np.arange(3.5, 5.5 + 0.5, 0.5)
+for idx, (slope, intercept) in enumerate(zip(slopes, intercepts)):
+    for tick in major_ticks:
+        y_intercept = slope * tick + intercept
+        ax.plot(tick, y_intercept, 'o', color=line_colors[idx], markersize=5)
+        ax.hlines(y_intercept, 3.5, tick, colors=line_colors[idx], linestyles=':', linewidth=1.25)
+
+for tick in major_ticks:
+    ax.vlines(tick, 3.5, tick, colors='grey', linestyles=':', linewidth=1.25)
+    ax.hlines(tick, 3.5, tick, colors='grey', linestyles=':', linewidth=1.25)        
+
+ax.legend(loc='lower right',fontsize = 10)
+plt.show()
