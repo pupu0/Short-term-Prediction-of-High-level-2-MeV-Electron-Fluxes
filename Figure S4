@@ -1,0 +1,117 @@
+"""Figure4"""
+import matplotlib.pyplot as plt
+from matplotlib.ticker import AutoMinorLocator
+import numpy as np
+import matplotlib.patches as mpatches
+import math
+from matplotlib.ticker import LogFormatter
+from matplotlib.ticker import FuncFormatter
+
+plt.rcParams['font.family'] = 'Times New Roman'
+intervals = ['[3.5, 4.0)', '[4.0, 4.5)', '[4.5, 5.0)', '[5.0, 5.5)']
+above_counts_model1 = [1066, 473, 230, 39]
+below_counts_model1 = [2138, 1113, 824, 177]
+above_counts_model2 = [1657, 883, 484, 61]
+below_counts_model2 = [1547, 703, 570, 155]
+above_counts_model3 = [1508, 682, 317, 83]
+below_counts_model3 = [1696, 904, 737, 133]
+above_counts_model4 = [1409, 666, 227, 69]
+below_counts_model4 = [1795, 920, 827, 147]
+
+total_counts_model1 = [above + below for above, below in zip(above_counts_model1, below_counts_model1)]
+total_counts_model2 = [above + below for above, below in zip(above_counts_model2, below_counts_model2)]
+total_counts_model3 = [above + below for above, below in zip(above_counts_model3, below_counts_model3)]
+total_counts_model4 = [above + below for above, below in zip(above_counts_model4, below_counts_model4)]
+
+black_counts = total_counts_model1_log10 = list(map(lambda x: math.log10(x), total_counts_model1))
+
+model1 = [abs(above - below) for above, below, total in zip(above_counts_model1, below_counts_model1, total_counts_model1)]
+model2 = [abs(above - below) for above, below, total in zip(above_counts_model2, below_counts_model2, total_counts_model2)]
+model3 = [abs(above - below) for above, below, total in zip(above_counts_model3, below_counts_model3, total_counts_model3)]
+model4 = [abs(above - below) for above, below, total in zip(above_counts_model4, below_counts_model4, total_counts_model4)]
+
+diffs_model1 = [abs((above - below) / total) for above, below, total in zip(above_counts_model1, below_counts_model1, total_counts_model1)]
+diffs_model2 = [abs((above - below) / total) for above, below, total in zip(above_counts_model2, below_counts_model2, total_counts_model2)]
+diffs_model3 = [abs((above - below) / total) for above, below, total in zip(above_counts_model3, below_counts_model3, total_counts_model3)]
+diffs_model4 = [abs((above - below) / total) for above, below, total in zip(above_counts_model4, below_counts_model4, total_counts_model4)]
+
+data1 = [0.03, 0.06, 0.06, 0.02]  
+data2 = [0.01, 0.00, 0.04, 0.04] 
+data3 = [0.07, 0.1, 0.11, 0.07] 
+data4 = [0.02, 0.05, 0.09, 0.05]  
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 5))
+
+bar_width = 0.4
+x = np.arange(len(intervals))
+offset = bar_width
+
+ax1.bar(x-(offset/2), diffs_model1, width=bar_width, color='blue', label='Base-DNN', edgecolor='navy', alpha=0.7)
+ax1.bar(x-(offset/2), diffs_model4, width=bar_width, color='red', label='DNN+MSE', edgecolor='darkred', alpha=0.7, bottom=[-val for val in diffs_model4])
+ax1.bar(x+(offset/2), diffs_model3, width=bar_width, color='skyblue', label='Base-DNN+EnhancedLoss', edgecolor='royalblue', alpha=0.7)
+ax1.bar(x+(offset/2), diffs_model2, width=bar_width, color='orange', label='DNN', edgecolor='darkorange', alpha=0.7, bottom=[-val for val in diffs_model2])
+ax1.axhline(0, color='black', linewidth=1.25)
+ax1.text(0.05, 0.93, '(a)', transform=ax1.transAxes, fontsize=19, fontweight='bold')
+ax1.set_ylabel('Probability Density', fontsize=16)
+ax1.set_xticks(x)
+ax1.set_xticklabels(intervals, rotation=0)
+ax1.set_xlim(-0.5, len(intervals) - 0.5)
+ax1.set_ylim(-1, 1)
+ax1.xaxis.set_minor_locator(AutoMinorLocator())
+ax1.yaxis.set_minor_locator(AutoMinorLocator())
+
+for spine in ax1.spines.values():
+    spine.set_edgecolor('black')
+
+ax1.tick_params(axis='x', which='both', direction='in', length=6, width=1.25, bottom=True, top=True, labelbottom=True, labelsize=15)
+ax1.tick_params(axis='y', which='both', direction='in', length=6, width=1.25, left=True, right=True, labelleft=True, labelsize=15)
+
+ax1.tick_params(axis='x', which='minor', direction='in', length=3, width=0.8)
+ax1.tick_params(axis='y', which='minor', direction='in', length=3, width=0.8)
+
+ax1.grid(False)
+ax1.legend(fontsize=13,loc = 'lower left')
+ax1.set_xlabel('log$_{10}$Flux', fontsize=17)
+
+ax3 = ax1.twinx()
+ax3.plot(x, black_counts, color='black', marker='p', linestyle='--', label='Base-DNN')
+ax3.set_ylabel('Counts of flux interval', fontsize=16)
+
+def log_formatter(y, pos):
+    return r'$10^{%.1f}$' % y
+
+formatter = FuncFormatter(log_formatter)
+ax3.yaxis.set_major_formatter(formatter)
+ax3.set_ylim(2.0, 4,0)
+ax3.tick_params(axis='y', which='both', direction='in', length=6, width=1.25, left=False, right=True, labelleft=False, labelright=True, labelsize=13)
+ax3.yaxis.set_minor_locator(AutoMinorLocator())
+ax3.tick_params(axis='y', which='minor', direction='in', length=3, width=0.8)
+
+ax2.plot(x, data3, color='blue', marker='o', linestyle='-.')
+ax2.plot(x, data4, color='red', marker='o', linestyle='-.')
+ax2.plot(x, data1, color='skyblue', marker='p', linestyle='-', alpha=0.7)
+ax2.plot(x, data2, color='orange', marker='p', linestyle='-', alpha=0.7)
+
+ax2.set_ylabel('Mean Prediction Error', fontsize=16)
+ax2.yaxis.set_label_position('right')
+ax2.set_xticks(x)
+ax2.set_xticklabels(intervals, rotation=0)
+
+for spine in ax2.spines.values():
+    spine.set_edgecolor('black')
+
+ax2.tick_params(axis='x', which='both', direction='in', length=6, width=1.25, bottom=True, top=True, labelbottom=True, labelsize=15)
+ax2.tick_params(axis='y', which='both', direction='in', length=6, width=1.25, left=True, right=True, labelleft=False, labelright=True,labelsize=15)
+
+ax2.xaxis.set_minor_locator(AutoMinorLocator())
+ax2.yaxis.set_minor_locator(AutoMinorLocator())
+
+ax2.tick_params(axis='x', which='minor', direction='in', length=3, width=0.8)
+ax2.tick_params(axis='y', which='minor', direction='in', length=3, width=0.8)
+ax2.set_ylim(0, 0.115)  
+ax2.grid(False)
+
+ax2.text(0.05, 0.93, '(b)', transform=ax2.transAxes, fontsize=19, fontweight='bold')
+ax2.set_xlabel('log$_{10}$Flux', fontsize=17)
+plt.tight_layout()
+plt.show()
