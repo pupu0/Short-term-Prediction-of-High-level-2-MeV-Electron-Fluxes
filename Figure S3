@@ -1,0 +1,112 @@
+"""Figure3"""
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from tqdm.notebook import trange
+from matplotlib.ticker import MultipleLocator, AutoMinorLocator
+
+plt.rcParams['font.family'] = 'Times New Roman'
+
+csv_files = [
+    "E:\\论文最终提交的图片数据\\图\\数据准备\\model1_mse_2015.csv",
+    "E:\\论文最终提交的图片数据\\图\\数据准备\\model1-loss-2015-dayu3.5.csv",
+    "E:\\论文最终提交的图片数据\\图\\数据准备\\model2-mse-2015.csv",
+    "E:\\论文最终提交的图片数据\\图\\数据准备\model2-loss-2015-dayu3.5.csv"
+]
+npy_files = [
+    "E:\\论文最终提交的图片数据\\图\\数据准备\\model1-mse-2015-dayu3.5计数.npy",
+    "E:\\论文最终提交的图片数据\\图\\数据准备\\model1-loss-2015-dayu3.5计数.npy",
+    "E:\\论文最终提交的图片数据\\图\\数据准备\model2-mse-2015-dayu3.5计数.npy",
+    "E:\\论文最终提交的图片数据\\图\\数据准备\\model2大于3.5的计数-loss-2015.npy"
+]
+
+x_resolution = 200
+y_resolution = 200
+block_all = x_resolution * y_resolution
+
+fig, axes = plt.subplots(2, 2, figsize=(11, 11))
+fig.subplots_adjust(hspace=0.1, wspace=0.1) 
+
+for ax in fig.get_axes():
+    for spine in ax.spines.values():
+        spine.set_edgecolor('black')
+    
+for i, (csv_file, npy_file) in enumerate(zip(csv_files, npy_files)):
+    data_liu = pd.read_csv(csv_file, encoding='GBK')
+    data_liu = np.array(data_liu)
+    data_compare = data_liu[:, (1, 2)]
+    model = LinearRegression().fit(data_compare[:, 0].reshape(-1, 1), data_compare[:, 1])
+    x_trend = np.linspace(3.6, 7, 100)
+    y_trend = model.predict(x_trend.reshape(-1, 1))
+    y_pred = model.predict(data_compare[:, 0].reshape(-1, 1))
+    deviation = np.abs(data_compare[:, 1] - y_pred)
+    mean_deviation = np.mean(deviation)
+    data_load = np.load(npy_file)
+    data_transform = np.zeros((x_resolution, y_resolution))
+    data_load = np.reshape(data_load, (x_resolution, y_resolution))
+    for j in range(x_resolution):
+        data_transform[j, :] = data_load[x_resolution - j - 1, :]
+    data_transform = np.reshape(data_transform, (block_all, 1))
+    res = np.sum(data_transform)
+    data_transform /= res
+    data_test = np.log10(data_transform)
+    re_result0 = np.reshape(data_test, (x_resolution, y_resolution))
+
+    text_boxes = [
+        "PE: 0.824\nRMSE: 0.201\nCC: 0.923",
+        "PE: 0.831\nRMSE: 0.197\nCC: 0.915",
+        "PE: 0.830\nRMSE: 0.191\nCC: 0.917",
+        "PE: 0.837\nRMSE: 0.189\nCC: 0.916"
+    ]
+    row = i // 2
+    col = i % 2
+    ax = axes[row, col]
+    cmap = ax.imshow(re_result0, cmap='jet', extent=(3.5, 7, 3.5,7), aspect='auto')
+    ax.plot(x_trend, y_trend, 'r-', label='Trend Line',linewidth = 2)
+    ax.plot([3.5,7], [3.5, 7], 'k--',linewidth = 1)
+
+    subplot_letter = ['(a)', '(b)', '(c)', '(d)'][i]
+    ax.text(0.03, 0.93, subplot_letter, transform=ax.transAxes, fontsize=20, fontweight='bold')
+
+    ax.plot([3.5, 6.0], [4.5, 7.0], 'k--',color='darkred')  
+    ax.plot([4.5, 7.0], [3.5, 6.0], 'k--',color='darkred')  
+
+    textbox_props = dict(boxstyle='square', facecolor='white', edgecolor='none', alpha=1)
+    ax.text(0.63, 0.04, text_boxes[i], transform=ax.transAxes, fontsize=20, verticalalignment='bottom', bbox=textbox_props)
+
+    ax.tick_params(axis='both', which='both', direction='in', length=6, width=1.25, bottom=True, top=True, left=True, right=True, labelsize=17)
+
+    ax.xaxis.set_major_locator(MultipleLocator(0.5))
+    ax.yaxis.set_major_locator(MultipleLocator(0.5))
+
+    ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+    ax.yaxis.set_minor_locator(AutoMinorLocator(5))
+
+    ax.tick_params(axis='both', which='minor', direction='in', length=3, width=0.8)
+
+    if (i % 2 == 0) and (i//2 ==0):  
+        ax.set_ylabel('Base-DNN\n>2MeV Flux$_{model}$\nlog$_{10}$(cm$^{2}$srs)$^{-1}$',fontsize = 17)
+    elif (i % 2 == 0) and (i//2 ==1):  
+        ax.set_ylabel('DNN\n>2MeV Flux$_{model}$\nlog$_{10}$(cm$^{2}$srs)$^{-1}$',fontsize = 17)
+    else:
+        ax.set_ylabel('')  
+        ax.set_yticklabels([])
+    if (i // 2 == 1)and(i%2==0):  
+        ax.set_xlabel('>2MeV Flux$_{obs}$\nlog$_{10}$(cm$^{2}$srs)$^{-1}$',fontsize = 17)
+    elif (i // 2 == 1)and(i%2==1):  
+        ax.set_xlabel('>2MeV Flux$_{obs}$\nlog$_{10}$(cm$^{2}$srs)$^{-1}$',fontsize = 17)
+    else:
+        ax.set_xlabel('')  
+        ax.set_xticklabels([])
+
+fig.suptitle("                          MSE                                                              EnhancedLoss", fontsize=18,ha='center')
+
+cax = fig.add_axes([1.00, 0.1, 0.035, 0.847])
+cbar = fig.colorbar(cmap, cax=cax,aspect = 10,pad = 0.05)
+cbar.set_label('log$_{10}$(n/n$_{all}$)',fontsize =19)
+
+cbar.ax.tick_params(labelsize=17)
+fig.tight_layout()
+plt.subplots_adjust(bottom=0.1)
+plt.show()
