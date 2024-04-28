@@ -1,0 +1,69 @@
+"""Figure7"""
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.ticker import AutoMinorLocator
+
+plt.rcParams['font.family'] = 'Times New Roman'
+csv_file1 = "E:\\论文最终提交的图片数据\\图\\数据准备\\2015全部数据整理版.csv"
+csv_file2 = "D:\\论文准备材料\\整理后的2015全部.csv"
+
+df1 = pd.read_csv(csv_file1)
+df2 = pd.read_csv(csv_file2)
+
+data1 = df1.iloc[:, 1]  
+data2 = df1.iloc[:, 2]  
+data3 = df1.iloc[:, 5]  
+
+fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+counts1, bins1, _ = axs[0].hist(data1, bins=30, color='blue', alpha=0.3, edgecolor='blue', label='Observations', density=True)
+counts2, bins2, _ = axs[0].hist(data2, bins=bins1, color='red', alpha=0.3, edgecolor='red', label='Base-DNN', density=True)
+
+axs[0].set_xlabel(r'$\mathit{log}_{10}$ Flux ($\mathit{cm}^{-2}{sr}^{-1}{s}^{-1}$)', fontsize=16)
+axs[0].set_ylabel('Density', fontsize=18)
+axs[0].set_xlim(1, 5.5)
+axs[0].set_ylim(0, 0.55)
+axs[0].tick_params(axis='x', which='both', direction='in', length=6, width=1.25, bottom=True, top=True, labelbottom=True, labelsize=16)
+axs[0].tick_params(axis='y', which='both', direction='in', length=6, width=1.25, left=True, right=True, labelleft=True, labelsize=16)
+axs[0].xaxis.set_minor_locator(AutoMinorLocator())
+axs[0].yaxis.set_minor_locator(AutoMinorLocator())
+axs[0].tick_params(axis='x', which='minor', direction='in', length=3, width=0.8)
+axs[0].tick_params(axis='y', which='minor', direction='in', length=3, width=0.8)
+axs[0].spines['top'].set_color('black')
+axs[0].spines['right'].set_color('black')
+axs[0].spines['bottom'].set_color('black')
+axs[0].spines['left'].set_color('black')
+axs[0].grid(False)
+axs[0].legend(fontsize=14)
+start_bin = min(bins1, key=lambda x: abs(x - 3.5))
+start_index = list(bins1).index(start_bin)
+above_3_5 = sum(counts1[start_index:])
+axs[0].add_patch(plt.Rectangle((bins1[start_index], 0), sum(counts1[start_index:]), max(counts1)*0.8, fill=False, edgecolor='red', linestyle='--', lw=2))
+axs[0].text(0.03, 0.93, '(a)', transform=axs[0].transAxes, fontsize=17, fontweight='bold')
+
+counts4, bins4, _ = axs[1].hist(data1, bins=30, color='blue', alpha=0.3, edgecolor='blue', label='Observations', density=True)
+counts3, bins3, _ = axs[1].hist(data3, bins=bins1, color='red', alpha=0.3, edgecolor='red', label='DNN', density=True)
+
+axs[1].set_xlabel(r'$\mathit{log}_{10}$ Flux ($\mathit{cm}^{-2}{sr}^{-1}{s}^{-1}$)', fontsize=16)
+axs[1].set_ylabel('', fontsize=10)
+axs[1].set_xlim(1, 5.5)
+axs[1].set_ylim(0, 0.55)
+axs[1].tick_params(axis='x', which='both', direction='in', length=6, width=1.25, bottom=True, top=True, labelbottom=True, labelsize=16)
+axs[1].tick_params(axis='y', which='both', direction='in', length=6, width=1.25, left=True, right=True, labelleft=True, labelsize=16)
+axs[1].xaxis.set_minor_locator(AutoMinorLocator())
+axs[1].yaxis.set_minor_locator(AutoMinorLocator())
+axs[1].tick_params(axis='x', which='minor', direction='in', length=3, width=0.8)
+axs[1].tick_params(axis='y', which='minor', direction='in', length=3, width=0.8)
+axs[1].spines['top'].set_color('black')
+axs[1].spines['right'].set_color('black')
+axs[1].spines['bottom'].set_color('black')
+axs[1].spines['left'].set_color('black')
+axs[1].grid(False)
+axs[1].legend(fontsize=14)
+
+above_3_5 = sum(counts1[start_index:])
+axs[1].add_patch(plt.Rectangle((bins1[start_index], 0), sum(counts1[start_index:]), max(counts1)*0.8, fill=False, edgecolor='red', linestyle='--', lw=2))
+axs[1].text(0.03, 0.93, '(b)', transform=axs[1].transAxes, fontsize=17, fontweight='bold')
+axs[1].set_yticklabels([])
+
+plt.tight_layout()
+plt.show()
